@@ -274,6 +274,7 @@
       background: #000;
     }
 
+
     .trail-dot {
       position: absolute;
       width: 14px;
@@ -439,6 +440,28 @@
       audioWave.classList.toggle("playing", isPlaying);
     }
 
+    function startNewRound() {
+      solvedSet = new Set();
+      gameCompleted = false;
+      resetWordQueue();
+      nextFlower();
+    }
+
+    function closeCelebration() {
+      if (!celebrationEl || !winVideoEl) {
+        return;
+      }
+
+      celebrationEl.classList.remove("active");
+      celebrationEl.setAttribute("aria-hidden", "true");
+      winVideoEl.pause();
+      winVideoEl.currentTime = 0;
+      tryPlayAudio();
+      startNewRound();
+      guessEl.focus();
+    }
+
+
     function triggerCelebration() {
       if (!celebrationEl || !winVideoEl) {
         return;
@@ -447,21 +470,15 @@
       audio.pause();
       setAudioState(false);
       celebrationEl.classList.add("active");
+      celebrationEl.setAttribute("aria-hidden", "false");
       winVideoEl.currentTime = 0;
       const playPromise = winVideoEl.play();
       if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch(() => {});
+        playPromise.catch(() => {
+          closeCelebration();
+        });
       }
 
-      const requestFullscreen =
-        winVideoEl.requestFullscreen ||
-        winVideoEl.webkitRequestFullscreen ||
-        winVideoEl.webkitEnterFullscreen;
-      if (requestFullscreen) {
-        try {
-          requestFullscreen.call(winVideoEl);
-        } catch (_) {}
-      }
     }
 
     function tryPlayAudio() {
@@ -898,11 +915,11 @@
 
       winVideoEl.addEventListener("play", silenceAudio);
       winVideoEl.addEventListener("playing", silenceAudio);
-      winVideoEl.addEventListener("ended", () => {
-        celebrationEl.classList.remove("active");
-        tryPlayAudio();
-      });
+      winVideoEl.addEventListener("ended", closeCelebration);
+      winVideoEl.addEventListener("error", closeCelebration);
+      winVideoEl.addEventListener("abort", closeCelebration);
     }
+
 
     function initStarfield() {
       if (!window.THREE || !threeBg) {
@@ -1038,8 +1055,7 @@
     }
 
     renderList();
-    resetWordQueue();
-    nextFlower();
+    startNewRound();
     tryPlayAudio();
     window.addEventListener("click", tryPlayAudio, { once: true });
     initStarfield();
