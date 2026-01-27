@@ -75,6 +75,10 @@
       color: #4da3ff;
     }
 
+    .bloom-word {
+      transition: color 0.6s ease;
+    }
+
     .subtitle {
       margin: 0 0 20px;
       font-size: 1.05rem;
@@ -282,7 +286,7 @@
   <div id="three-bg" aria-hidden="true"></div>
   <div class="wrap">
     <section class="panel">
-      <h1>Spell the Bloom</h1>
+      <h1>Spell the <span id="bloom-word" class="bloom-word">Bloom</span></h1>
       <p class="subtitle">Type the flower name you see. Get it right and the background bursts with color.</p>
 
       <div class="prompt">
@@ -362,6 +366,7 @@
     const threeBg = document.getElementById("three-bg");
     const audioToggle = document.getElementById("audio-toggle");
     const audioWave = document.getElementById("audio-wave");
+    const bloomWordEl = document.getElementById("bloom-word");
 
     let current = flowers[0];
     let streak = 0;
@@ -386,6 +391,18 @@
     const audio = new Audio("Dark Tunnle.mp3");
     audio.loop = true;
     audio.volume = 0.6;
+
+    function randomBloomColor() {
+      const hue = Math.floor(Math.random() * 360);
+      return `hsl(${hue} 85% 60%)`;
+    }
+
+    if (bloomWordEl) {
+      bloomWordEl.style.color = randomBloomColor();
+      setInterval(() => {
+        bloomWordEl.style.color = randomBloomColor();
+      }, 900);
+    }
 
     function setAudioState(isPlaying) {
       audioToggle.textContent = isPlaying ? "Pause" : "Play";
