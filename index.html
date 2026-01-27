@@ -444,6 +444,8 @@
         return;
       }
 
+      audio.pause();
+      setAudioState(false);
       celebrationEl.classList.add("active");
       winVideoEl.currentTime = 0;
       const playPromise = winVideoEl.play();
@@ -889,8 +891,16 @@
     });
 
     if (winVideoEl && celebrationEl) {
+      const silenceAudio = () => {
+        audio.pause();
+        setAudioState(false);
+      };
+
+      winVideoEl.addEventListener("play", silenceAudio);
+      winVideoEl.addEventListener("playing", silenceAudio);
       winVideoEl.addEventListener("ended", () => {
         celebrationEl.classList.remove("active");
+        tryPlayAudio();
       });
     }
 
