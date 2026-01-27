@@ -147,6 +147,30 @@
       box-shadow: none;
     }
 
+    .speech-bubble {
+      position: relative;
+      padding: 8px 12px;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      color: #1f7a3a;
+      background: #e7f7ec;
+      border: 1px solid #1f7a3a;
+      white-space: nowrap;
+    }
+
+    .speech-bubble::after {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      background: #e7f7ec;
+      border-left: 1px solid #1f7a3a;
+      border-bottom: 1px solid #1f7a3a;
+      transform: translateY(-50%) rotate(45deg);
+    }
+
     .status {
       margin-top: 14px;
       font-weight: 600;
@@ -351,6 +375,7 @@
         <button id="ready">Ready to Spell (60s)</button>
         <button id="hint" class="ghost">Click me for word hint</button>
         <button id="skip" class="ghost">Skip</button>
+        <span class="speech-bubble">push enter to enter word</span>
       </div>
 
       <div id="status" class="status"></div>
