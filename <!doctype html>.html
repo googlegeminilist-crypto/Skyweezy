@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spell the Bloom</title>
+  <style>
+    :root {
+      --bg-1: #f5efe6;
+      --bg-2: #e7d7c9;
+      --ink: #2b2b2b;
+      --accent: #d96c5b;
+      --accent-2: #2e6f7e;
+      --card: #fffaf3;
+      --good: #2f8f46;
+      --bad: #b3261e;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --panel-edge-1: #ff7ab8;
+      --panel-edge-2: #78d6ff;
+      --panel-edge-3: #a7ffb3;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+      color: var(--ink);
+      background: #0b0d1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      overflow-x: hidden;
+    }
+
+    #three-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    #three-bg canvas {
+      display: block;
+    }
+
+    .wrap {
+      width: min(900px, 100%);
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 1.2fr 1fr;
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .panel {
+      background:
+        linear-gradient(var(--card), var(--card)) padding-box,
+        linear-gradient(135deg, var(--panel-edge-1), var(--panel-edge-2), var(--panel-edge-3)) border-box;
+      border-radius: 22px;
+      padding: 28px;
+      box-shadow: 0 20px 50px var(--shadow);
+      border: 2px solid transparent;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 3vw + 1rem, 3.2rem);
+      margin: 0 0 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      font-size: 1.05rem;
+      color: #5f5f5f;
+    }
+
+    .prompt {
+      font-size: 1.35rem;
+      margin: 12px 0 18px;
+      padding: 16px;
+      background: #f3e8dc;
+      border-radius: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .prompt strong {
+      color: var(--accent-2);
+      letter-spacing: 1px;
+    }
+
+    .prompt strong.hidden-word {
+      color: #a07c6c;
+      letter-spacing: 3px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      font-family: "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
+      background: #fff;
+    }
+
+    button {
+      border: none;
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-family: "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
+      border-radius: 999px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 24px rgba(217, 108, 91, 0.3);
+    }
+
+    button:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 14px 30px rgba(217, 108, 91, 0.4);
+    }
+
+    .ghost {
+      background: transparent;
+      color: var(--accent-2);
+      border: 1px solid rgba(46, 111, 126, 0.5);
+      box-shadow: none;
+    }
+
+    .status {
+      margin-top: 14px;
+      font-weight: 600;
+      min-height: 24px;
+    }
+
+    .status.good {
+      color: var(--good);
+    }
+
+    .status.bad {
+      color: var(--bad);
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      font-family: "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
+    }
+
+    .chip {
+      padding: 10px 12px;
+      background: #f7efe6;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 0.95rem;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .aside {
+      display: grid;
+      gap: 18px;
+    }
+
+    .audio-panel h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .audio-panel p {
+      margin: 4px 0 0;
+      color: #6b6b6b;
+      font-size: 0.95rem;
+    }
+
+    .audio-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .wave {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 46px;
+      margin-top: 16px;
+    }
+
+    .wave span {
+      width: 8px;
+      height: 18px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ff8ad8, #7ad7ff, #8dffb3);
+      animation: wave 1s ease-in-out infinite;
+      animation-play-state: paused;
+    }
+
+    .wave.playing span {
+      animation-play-state: running;
+    }
+
+    .wave span:nth-child(2) { animation-delay: 0.1s; }
+    .wave span:nth-child(3) { animation-delay: 0.2s; }
+    .wave span:nth-child(4) { animation-delay: 0.3s; }
+    .wave span:nth-child(5) { animation-delay: 0.4s; }
+    .wave span:nth-child(6) { animation-delay: 0.5s; }
+    .wave span:nth-child(7) { animation-delay: 0.6s; }
+
+    @keyframes wave {
+      0%, 100% { height: 14px; opacity: 0.6; }
+      50% { height: 44px; opacity: 1; }
+    }
+
+    .score {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1rem;
+    }
+
+    .score strong {
+      font-size: 1.6rem;
+      color: var(--accent-2);
+    }
+
+    .trail-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 25;
+    }
+
+    .trail-dot {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      opacity: 0.9;
+      transform: translate(-50%, -50%);
+      animation: trail 0.9s ease-out forwards;
+      mix-blend-mode: screen;
+    }
+
+    @keyframes trail {
+      0% {
+        opacity: 0.9;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2.2);
+      }
+    }
+
+    @media (max-width: 860px) {
+      .wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="three-bg" aria-hidden="true"></div>
+  <div class="wrap">
+    <section class="panel">
+      <h1>Spell the Bloom</h1>
+      <p class="subtitle">Type the flower name you see. Get it right and the background bursts with color.</p>
+
+      <div class="prompt">
+        Spell this flower: <strong id="target">Rose</strong>
+      </div>
+
+      <div class="controls">
+        <input id="guess" type="text" autocomplete="off" spellcheck="false" placeholder="type the word" />
+        <button id="check">Check</button>
+        <button id="ready">Ready to Spell (60s)</button>
+        <button id="hint" class="ghost">Hint (10s)</button>
+        <button id="skip" class="ghost">Skip</button>
+      </div>
+
+      <div id="status" class="status"></div>
+    </section>
+
+    <aside class="aside">
+      <div class="panel score" id="streak-panel">
+        <span>Correct streak</span>
+        <strong id="streak">0</strong>
+      </div>
+
+      <div class="panel score">
+        <span>Points</span>
+        <strong id="points">0</strong>
+      </div>
+
+      <div class="panel audio-panel">
+        <div class="audio-row">
+          <div>
+            <h2>Dark Tunnel</h2>
+            <p>Now playing</p>
+          </div>
+          <button id="audio-toggle" class="ghost">Play</button>
+        </div>
+        <div class="wave" id="audio-wave" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Flower list</h2>
+        <div class="list" id="flower-list"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="trail-layer" id="trail-layer"></div>
+
+  <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+  <script>
+    const flowers = [
+      "Rose",
+      "Tulip",
+      "Dahlia",
+      "Iris",
+      "Peony",
+      "Lilac",
+      "Orchid",
+      "Marigold",
+      "Zinnia",
+      "Anemone",
+      "Poppy",
+      "Camellia"
+    ];
+
+    const targetEl = document.getElementById("target");
+    const guessEl = document.getElementById("guess");
+    const statusEl = document.getElementById("status");
+    const streakEl = document.getElementById("streak");
+    const pointsEl = document.getElementById("points");
+    const listEl = document.getElementById("flower-list");
+    const hintButton = document.getElementById("hint");
+    const readyButton = document.getElementById("ready");
+    const trailLayer = document.getElementById("trail-layer");
+    const threeBg = document.getElementById("three-bg");
+    const audioToggle = document.getElementById("audio-toggle");
+    const audioWave = document.getElementById("audio-wave");
+
+    let current = flowers[0];
+    let streak = 0;
+    let points = 0;
+    let wordVisible = true;
+    let readyTimeoutId = null;
+    let hintTimeoutId = null;
+    let readyActive = false;
+    let hue = 0;
+    let rafId = null;
+    let lastPointer = { x: 0, y: 0 };
+    let lastFrameTime = 0;
+    let threeScene = null;
+    let threeCamera = null;
+    let threeSplatterGroup = null;
+    let splatterBursts = [];
+    let splatterTextures = [];
+    let threeViewport = { width: window.innerWidth, height: window.innerHeight };
+    let skyweezySprite = null;
+    let skyweezyCanvas = null;
+
+    const audio = new Audio("Dark Tunnle.mp3");
+    audio.loop = true;
+    audio.volume = 0.6;
+
+    function setAudioState(isPlaying) {
+      audioToggle.textContent = isPlaying ? "Pause" : "Play";
+      audioWave.classList.toggle("playing", isPlaying);
+    }
+
+    function tryPlayAudio() {
+      audio.play().then(() => {
+        setAudioState(true);
+      }).catch(() => {
+        setAudioState(false);
+      });
+    }
+
+    const readyHideMs = 60000;
+    const hintDurationMs = 10000;
+
+    const splatterPalette = [
+      "#ff8ad8",
+      "#7ad7ff",
+      "#8dffb3",
+      "#ffd27a",
+      "#b28bff",
+      "#ff7a7a"
+    ];
+
+    function renderList() {
+      listEl.innerHTML = "";
+      flowers.forEach((flower) => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = flower;
+        listEl.appendChild(chip);
+      });
+    }
+
+    function nextFlower() {
+      const nextIndex = Math.floor(Math.random() * flowers.length);
+      current = flowers[nextIndex];
+      showWord();
+      readyActive = false;
+      clearTimeout(readyTimeoutId);
+      clearTimeout(hintTimeoutId);
+      guessEl.value = "";
+      guessEl.focus();
+    }
+
+    function maskedWord(text) {
+      return "?".repeat(Math.max(3, text.length));
+    }
+
+    function showWord() {
+      wordVisible = true;
+      targetEl.textContent = current;
+      targetEl.classList.remove("hidden-word");
+    }
+
+    function hideWord() {
+      wordVisible = false;
+      targetEl.textContent = maskedWord(current);
+      targetEl.classList.add("hidden-word");
+    }
+
+    function startReadyHide() {
+      readyActive = true;
+      hideWord();
+      clearTimeout(readyTimeoutId);
+      readyTimeoutId = setTimeout(() => {
+        readyActive = false;
+        showWord();
+      }, readyHideMs);
+    }
+
+    function normalize(text) {
+      return text.trim().toLowerCase();
+    }
+
+    function setStatus(text, type) {
+      statusEl.textContent = text;
+      statusEl.className = `status ${type}`;
+    }
+
+    function createSplatterTexture() {
+      const size = 128;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, size, size);
+      ctx.save();
+      ctx.translate(size / 2, size / 2);
+
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      const points = 10 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < points; i += 1) {
+        const angle = (i / points) * Math.PI * 2;
+        const radius = size * (0.18 + Math.random() * 0.12);
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      for (let i = 0; i < 18; i += 1) {
+        const r = 3 + Math.random() * 6;
+        const x = (Math.random() - 0.5) * size * 0.9;
+        const y = (Math.random() - 0.5) * size * 0.9;
+        ctx.globalAlpha = 0.7 + Math.random() * 0.3;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+      ctx.globalAlpha = 1;
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      return texture;
+    }
+
+    function createSkyweezySprite() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1024;
+      canvas.height = 256;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.font = "700 140px 'Trebuchet MS', 'Lucida Sans Unicode', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#7dff9b";
+      ctx.shadowColor = "rgba(120, 255, 150, 0.9)";
+      ctx.shadowBlur = 28;
+      ctx.fillText("Skyweezy", canvas.width / 2, canvas.height / 2 + 6);
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = "#c9ffd9";
+      ctx.fillText("Skyweezy", canvas.width / 2, canvas.height / 2 + 6);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false,
+        depthTest: false,
+        blending: THREE.AdditiveBlending
+      });
+      const sprite = new THREE.Sprite(material);
+      sprite.center.set(0, 1);
+      sprite.renderOrder = 6;
+      skyweezyCanvas = canvas;
+      return sprite;
+    }
+
+    function updateSkyweezyLayout() {
+      if (!skyweezySprite || !threeCamera || !skyweezyCanvas) {
+        return;
+      }
+
+      const zPlane = 0;
+      const vFov = THREE.MathUtils.degToRad(threeCamera.fov);
+      const height = 2 * Math.tan(vFov / 2) * (threeCamera.position.z - zPlane);
+      const width = height * threeCamera.aspect;
+      const marginPx = Math.max(16, Math.min(threeViewport.width * 0.03, 32));
+      const targetWidthPx = Math.min(420, threeViewport.width * 0.5);
+      const targetWidth = (targetWidthPx / threeViewport.width) * width;
+      const textureAspect = skyweezyCanvas.width / skyweezyCanvas.height;
+      const targetHeight = targetWidth / textureAspect;
+      skyweezySprite.scale.set(targetWidth, targetHeight, 1);
+
+      const marginWorldX = (marginPx / threeViewport.width) * width;
+      const marginWorldY = (marginPx / threeViewport.height) * height;
+      skyweezySprite.position.set(
+        -width / 2 + marginWorldX,
+        height / 2 - marginWorldY,
+        zPlane
+      );
+    }
+
+    function screenToWorld(x, y, zPlane) {
+      const ndc = new THREE.Vector3(
+        (x / threeViewport.width) * 2 - 1,
+        -(y / threeViewport.height) * 2 + 1,
+        0.5
+      );
+      ndc.unproject(threeCamera);
+      const dir = ndc.sub(threeCamera.position).normalize();
+      const distance = (zPlane - threeCamera.position.z) / dir.z;
+      return threeCamera.position.clone().add(dir.multiplyScalar(distance));
+    }
+
+    function createSplatterBurst(screenX, screenY) {
+      if (!threeSplatterGroup || !splatterTextures.length) {
+        return;
+      }
+
+      const center = screenToWorld(screenX, screenY, 0);
+      const group = new THREE.Group();
+      group.position.copy(center);
+      const dropletCount = 10 + Math.floor(Math.random() * 10);
+
+      for (let i = 0; i < dropletCount; i += 1) {
+        const texture = splatterTextures[Math.floor(Math.random() * splatterTextures.length)];
+        const color = splatterPalette[Math.floor(Math.random() * splatterPalette.length)];
+        const material = new THREE.SpriteMaterial({
+          map: texture,
+          color,
+          transparent: true,
+          opacity: 0.9,
+          depthWrite: false,
+          depthTest: false
+        });
+
+        const sprite = new THREE.Sprite(material);
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * 14;
+        const offset = new THREE.Vector3(
+          Math.cos(angle) * radius,
+          Math.sin(angle) * radius,
+          (Math.random() - 0.5) * 10
+        );
+        sprite.position.copy(offset);
+        const scale = 6 + Math.random() * 12;
+        sprite.scale.set(scale, scale, 1);
+        sprite.material.rotation = Math.random() * Math.PI;
+        sprite.userData.baseOpacity = material.opacity;
+        sprite.userData.drift = new THREE.Vector3(
+          (Math.random() - 0.5) * 4,
+          (Math.random() - 0.5) * 4,
+          0
+        );
+        sprite.userData.rotSpeed = (Math.random() - 0.5) * 1.5;
+        group.add(sprite);
+      }
+
+      threeSplatterGroup.add(group);
+      splatterBursts.push({
+        group,
+        life: 1.4,
+        maxLife: 1.4,
+        grow: 0.35
+      });
+    }
+
+    function triggerSplatter() {
+      if (!threeScene || !threeCamera) {
+        return;
+      }
+
+      const anchors = [
+        { x: 0.12, y: 0.12 },
+        { x: 0.5, y: 0.08 },
+        { x: 0.88, y: 0.14 },
+        { x: 0.12, y: 0.84 },
+        { x: 0.9, y: 0.78 },
+        { x: 0.52, y: 0.92 }
+      ];
+
+      anchors.forEach((anchor) => {
+        const jitterX = (Math.random() - 0.5) * 0.06;
+        const jitterY = (Math.random() - 0.5) * 0.06;
+        const screenX = (anchor.x + jitterX) * threeViewport.width;
+        const screenY = (anchor.y + jitterY) * threeViewport.height;
+        createSplatterBurst(screenX, screenY);
+      });
+    }
+
+    function updateSplatters(deltaSeconds) {
+      if (!threeSplatterGroup) {
+        return;
+      }
+
+      splatterBursts = splatterBursts.filter((burst) => {
+        burst.life -= deltaSeconds;
+        const fade = Math.max(0, burst.life / burst.maxLife);
+        const scale = 1 + (1 - fade) * burst.grow;
+        burst.group.scale.set(scale, scale, scale);
+
+        burst.group.children.forEach((sprite) => {
+          sprite.material.opacity = sprite.userData.baseOpacity * fade;
+          sprite.material.rotation += sprite.userData.rotSpeed * deltaSeconds;
+          sprite.position.addScaledVector(sprite.userData.drift, deltaSeconds);
+        });
+
+        if (fade <= 0.02) {
+          threeSplatterGroup.remove(burst.group);
+          burst.group.children.forEach((sprite) => {
+            if (sprite.material) {
+              sprite.material.dispose();
+            }
+          });
+          return false;
+        }
+        return true;
+      });
+    }
+
+    function checkGuess() {
+      if (!guessEl.value.trim()) {
+        setStatus("Type a flower name first.", "bad");
+        return;
+      }
+
+      if (normalize(guessEl.value) === normalize(current)) {
+        streak = Math.min(100, streak + 1);
+        points += 10;
+        streakEl.textContent = streak;
+        pointsEl.textContent = points;
+        setStatus("Correct! Color burst unlocked.", "good");
+        triggerSplatter();
+        nextFlower();
+      } else {
+        streak = 0;
+        points -= 10;
+        streakEl.textContent = streak;
+        pointsEl.textContent = points;
+        setStatus("Not quite. Try again!", "bad");
+        guessEl.select();
+      }
+    }
+
+    document.getElementById("check").addEventListener("click", checkGuess);
+    readyButton.addEventListener("click", () => {
+      if (!wordVisible && readyActive) {
+        setStatus("Already hiding the word. Keep spelling!", "bad");
+        return;
+      }
+
+      setStatus("Word hidden for 60 seconds. Spell from memory!", "good");
+      startReadyHide();
+    });
+    hintButton.addEventListener("click", () => {
+      if (wordVisible) {
+        setStatus("Word is already showing. Click Ready to Spell first.", "bad");
+        return;
+      }
+
+      showWord();
+      clearTimeout(hintTimeoutId);
+      hintTimeoutId = setTimeout(() => {
+        if (readyActive) {
+          hideWord();
+        }
+      }, hintDurationMs);
+    });
+    document.getElementById("skip").addEventListener("click", () => {
+      streak = 0;
+      points -= 10;
+      streakEl.textContent = streak;
+      pointsEl.textContent = points;
+      setStatus("Skipped. New flower ready.", "bad");
+      nextFlower();
+    });
+
+    guessEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        checkGuess();
+      }
+    });
+
+    function paintTrail() {
+      rafId = null;
+      const dot = document.createElement("div");
+      dot.className = "trail-dot";
+      dot.style.left = `${lastPointer.x}px`;
+      dot.style.top = `${lastPointer.y}px`;
+      dot.style.background = `radial-gradient(circle, hsla(${hue}, 90%, 65%, 0.9), hsla(${hue + 20}, 90%, 55%, 0.2))`;
+      hue = (hue + 18) % 360;
+      trailLayer.appendChild(dot);
+      dot.addEventListener("animationend", () => dot.remove());
+    }
+
+    window.addEventListener("pointermove", (event) => {
+      lastPointer = { x: event.clientX, y: event.clientY };
+      if (!rafId) {
+        rafId = requestAnimationFrame(paintTrail);
+      }
+    });
+
+    audioToggle.addEventListener("click", () => {
+      if (audio.paused) {
+        tryPlayAudio();
+      } else {
+        audio.pause();
+        setAudioState(false);
+      }
+    });
+
+    function initStarfield() {
+      if (!window.THREE || !threeBg) {
+        return;
+      }
+
+      const rootStyle = document.documentElement.style;
+      const edgeA = new THREE.Color();
+      const edgeB = new THREE.Color();
+      const edgeC = new THREE.Color();
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x0b0d1a, 1);
+      threeBg.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth / window.innerHeight,
+        1,
+        900
+      );
+      camera.position.z = 160;
+      threeScene = scene;
+      threeCamera = camera;
+      threeViewport = { width: window.innerWidth, height: window.innerHeight };
+
+      threeSplatterGroup = new THREE.Group();
+      scene.add(threeSplatterGroup);
+      if (!splatterTextures.length) {
+        splatterTextures = [createSplatterTexture(), createSplatterTexture(), createSplatterTexture()];
+      }
+      if (!skyweezySprite) {
+        skyweezySprite = createSkyweezySprite();
+        scene.add(skyweezySprite);
+      }
+      updateSkyweezyLayout();
+
+      const starCount = 1200;
+      const positions = new Float32Array(starCount * 3);
+      const colors = new Float32Array(starCount * 3);
+      const baseColors = new Float32Array(starCount * 3);
+      const twinkleSpeed = new Float32Array(starCount);
+      const twinklePhase = new Float32Array(starCount);
+
+      for (let i = 0; i < starCount; i += 1) {
+        const i3 = i * 3;
+        positions[i3] = (Math.random() - 0.5) * 600;
+        positions[i3 + 1] = (Math.random() - 0.5) * 360;
+        positions[i3 + 2] = (Math.random() - 0.5) * 600;
+
+        const hue = Math.random();
+        const color = new THREE.Color().setHSL(hue, 0.7, 0.65);
+        baseColors[i3] = color.r;
+        baseColors[i3 + 1] = color.g;
+        baseColors[i3 + 2] = color.b;
+        colors[i3] = color.r;
+        colors[i3 + 1] = color.g;
+        colors[i3 + 2] = color.b;
+
+        twinkleSpeed[i] = 0.6 + Math.random() * 1.6;
+        twinklePhase[i] = Math.random() * Math.PI * 2;
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+      const material = new THREE.PointsMaterial({
+        size: 2.1,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+
+      const stars = new THREE.Points(geometry, material);
+      scene.add(stars);
+
+
+      function updatePanelGlow(time) {
+        const t = time * 0.00008;
+        edgeA.setHSL((t + 0.1) % 1, 0.75, 0.62);
+        edgeB.setHSL((t + 0.45) % 1, 0.8, 0.6);
+        edgeC.setHSL((t + 0.75) % 1, 0.75, 0.6);
+        rootStyle.setProperty("--panel-edge-1", `#${edgeA.getHexString()}`);
+        rootStyle.setProperty("--panel-edge-2", `#${edgeB.getHexString()}`);
+        rootStyle.setProperty("--panel-edge-3", `#${edgeC.getHexString()}`);
+      }
+
+      function animate(timeMs) {
+        const time = timeMs * 0.001;
+        const deltaSeconds = Math.min(0.05, (timeMs - lastFrameTime) / 1000 || 0);
+        lastFrameTime = timeMs;
+        const colorAttr = geometry.attributes.color;
+
+        for (let i = 0; i < starCount; i += 1) {
+          const i3 = i * 3;
+          const pulse = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(time * twinkleSpeed[i] + twinklePhase[i]));
+          colors[i3] = baseColors[i3] * pulse;
+          colors[i3 + 1] = baseColors[i3 + 1] * pulse;
+          colors[i3 + 2] = baseColors[i3 + 2] * pulse;
+        }
+
+        colorAttr.needsUpdate = true;
+        updatePanelGlow(performance.now());
+        updateSplatters(deltaSeconds);
+        if (skyweezySprite) {
+          const pulse = 0.85 + 0.15 * Math.sin(time * 2.2);
+          skyweezySprite.material.opacity = pulse;
+        }
+        stars.rotation.y += 0.0003;
+        stars.rotation.x += 0.0001;
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+      }
+
+      function resize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        threeViewport.width = window.innerWidth;
+        threeViewport.height = window.innerHeight;
+        updateSkyweezyLayout();
+      }
+
+      window.addEventListener("resize", resize);
+      lastFrameTime = performance.now();
+      animate(lastFrameTime);
+    }
+
+    renderList();
+    nextFlower();
+    tryPlayAudio();
+    window.addEventListener("click", tryPlayAudio, { once: true });
+    initStarfield();
+  </script>
+</body>
+</html>
