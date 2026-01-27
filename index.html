@@ -402,6 +402,7 @@
     let points = 0;
     let wordVisible = true;
     let readyTimeoutId = null;
+    let readyIntervalId = null;
     let hintTimeoutId = null;
     let readyActive = false;
     let hue = 0;
@@ -535,6 +536,8 @@
       showWord();
       readyActive = false;
       clearTimeout(readyTimeoutId);
+      clearInterval(readyIntervalId);
+      readyButton.textContent = "Ready to Spell (60s)";
       clearTimeout(hintTimeoutId);
       guessEl.value = "";
       guessEl.focus();
@@ -560,9 +563,23 @@
       readyActive = true;
       hideWord();
       clearTimeout(readyTimeoutId);
+      clearInterval(readyIntervalId);
+      let remaining = readyHideMs / 1000;
+      readyButton.textContent = `Ready to Spell (${remaining}s)`;
+      readyIntervalId = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          clearInterval(readyIntervalId);
+          readyButton.textContent = "Ready to Spell (60s)";
+          return;
+        }
+        readyButton.textContent = `Ready to Spell (${remaining}s)`;
+      }, 1000);
       readyTimeoutId = setTimeout(() => {
         readyActive = false;
         showWord();
+        clearInterval(readyIntervalId);
+        readyButton.textContent = "Ready to Spell (60s)";
       }, readyHideMs);
     }
 
