@@ -274,6 +274,37 @@
       background: #000;
     }
 
+    #celebration .video-label {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #ff3b3b;
+      font-family: "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      z-index: 2;
+    }
+
+    #celebration .skip-video {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      background: rgba(0, 0, 0, 0.55);
+      color: #ffffff;
+      font-family: "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
+      font-size: 0.95rem;
+      cursor: pointer;
+      z-index: 2;
+    }
+
 
     .trail-dot {
       position: absolute;
@@ -361,6 +392,7 @@
     <video id="win-video" playsinline>
       <source src="Stan5_s Video - Jan 26, 2026(9).mp4" type="video/mp4" />
     </video>
+    <div class="video-label">Skip</div>
   </div>
 
   <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
@@ -934,6 +966,12 @@
       winVideoEl.addEventListener("ended", closeCelebration);
       winVideoEl.addEventListener("error", closeCelebration);
       winVideoEl.addEventListener("abort", closeCelebration);
+    }
+
+    if (celebrationEl) {
+      celebrationEl.addEventListener("click", () => {
+        closeCelebration();
+      });
     }
 
 
