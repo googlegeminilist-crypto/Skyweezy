@@ -481,6 +481,20 @@
       "#b28bff",
       "#ff7a7a"
     ];
+    let remainingFlowers = [];
+
+    function shuffleArray(items) {
+      const array = [...items];
+      for (let i = array.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function resetWordQueue() {
+      remainingFlowers = shuffleArray(flowers);
+    }
 
     function renderList() {
       listEl.innerHTML = "";
@@ -493,8 +507,12 @@
     }
 
     function nextFlower() {
-      const nextIndex = Math.floor(Math.random() * flowers.length);
-      current = flowers[nextIndex];
+      if (remainingFlowers.length === 0) {
+        setStatus("No more new words. Refresh to play again.", "good");
+        return;
+      }
+
+      current = remainingFlowers.shift();
       showWord();
       readyActive = false;
       clearTimeout(readyTimeoutId);
@@ -764,6 +782,11 @@
     }
 
     function checkGuess() {
+      if (gameCompleted) {
+        setStatus("All words complete. Refresh to play again.", "good");
+        return;
+      }
+
       if (!guessEl.value.trim()) {
         setStatus("Type a flower name first.", "bad");
         return;
@@ -781,6 +804,7 @@
           gameCompleted = true;
           setStatus("Perfect run! All flowers spelled.", "good");
           triggerCelebration();
+          return;
         }
         nextFlower();
       } else {
@@ -818,6 +842,11 @@
       }, hintDurationMs);
     });
     document.getElementById("skip").addEventListener("click", () => {
+      if (gameCompleted || remainingFlowers.length === 0) {
+        setStatus("No more new words. Refresh to play again.", "good");
+        return;
+      }
+
       streak = 0;
       streakEl.textContent = streak;
       pointsEl.textContent = points;
@@ -999,6 +1028,7 @@
     }
 
     renderList();
+    resetWordQueue();
     nextFlower();
     tryPlayAudio();
     window.addEventListener("click", tryPlayAudio, { once: true });
