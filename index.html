@@ -253,6 +253,27 @@
       z-index: 25;
     }
 
+    #celebration {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.96);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+    }
+
+    #celebration.active {
+      display: flex;
+    }
+
+    #celebration video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+
     .trail-dot {
       position: absolute;
       width: 14px;
@@ -336,6 +357,11 @@
   </div>
 
   <div class="trail-layer" id="trail-layer"></div>
+  <div id="celebration" aria-hidden="true">
+    <video id="win-video" playsinline>
+      <source src="Stan5_s Video - Jan 26, 2026(9).mp4" type="video/mp4" />
+    </video>
+  </div>
 
   <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
   <script>
@@ -367,6 +393,8 @@
     const audioToggle = document.getElementById("audio-toggle");
     const audioWave = document.getElementById("audio-wave");
     const bloomWordEl = document.getElementById("bloom-word");
+    const celebrationEl = document.getElementById("celebration");
+    const winVideoEl = document.getElementById("win-video");
 
     let current = flowers[0];
     let streak = 0;
@@ -387,6 +415,8 @@
     let threeViewport = { width: window.innerWidth, height: window.innerHeight };
     let skyweezySprite = null;
     let skyweezyCanvas = null;
+    let solvedSet = new Set();
+    let gameCompleted = false;
 
     const audio = new Audio("Dark Tunnle.mp3");
     audio.loop = true;
@@ -407,6 +437,29 @@
     function setAudioState(isPlaying) {
       audioToggle.textContent = isPlaying ? "Pause" : "Play";
       audioWave.classList.toggle("playing", isPlaying);
+    }
+
+    function triggerCelebration() {
+      if (!celebrationEl || !winVideoEl) {
+        return;
+      }
+
+      celebrationEl.classList.add("active");
+      winVideoEl.currentTime = 0;
+      const playPromise = winVideoEl.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+      }
+
+      const requestFullscreen =
+        winVideoEl.requestFullscreen ||
+        winVideoEl.webkitRequestFullscreen ||
+        winVideoEl.webkitEnterFullscreen;
+      if (requestFullscreen) {
+        try {
+          requestFullscreen.call(winVideoEl);
+        } catch (_) {}
+      }
     }
 
     function tryPlayAudio() {
@@ -717,12 +770,18 @@
       }
 
       if (normalize(guessEl.value) === normalize(current)) {
+        solvedSet.add(current);
         streak = Math.min(100, streak + 1);
         points += 10;
         streakEl.textContent = streak;
         pointsEl.textContent = points;
         setStatus("Correct! Color burst unlocked.", "good");
         triggerSplatter();
+        if (!gameCompleted && solvedSet.size === flowers.length) {
+          gameCompleted = true;
+          setStatus("Perfect run! All flowers spelled.", "good");
+          triggerCelebration();
+        }
         nextFlower();
       } else {
         streak = 0;
@@ -799,6 +858,12 @@
         setAudioState(false);
       }
     });
+
+    if (winVideoEl && celebrationEl) {
+      winVideoEl.addEventListener("ended", () => {
+        celebrationEl.classList.remove("active");
+      });
+    }
 
     function initStarfield() {
       if (!window.THREE || !threeBg) {
