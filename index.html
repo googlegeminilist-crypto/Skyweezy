@@ -317,9 +317,8 @@
 
       <div class="controls">
         <input id="guess" type="text" autocomplete="off" spellcheck="false" placeholder="type the word" />
-        <button id="check">Check</button>
         <button id="ready">Ready to Spell (60s)</button>
-        <button id="hint" class="ghost">Hint (10s)</button>
+        <button id="hint" class="ghost">Click me for word hint</button>
         <button id="skip" class="ghost">Skip</button>
       </div>
 
@@ -853,7 +852,7 @@
       }
     }
 
-    document.getElementById("check").addEventListener("click", checkGuess);
+    // Use Enter to submit guesses now that the Check button is removed.
     readyButton.addEventListener("click", () => {
       if (!wordVisible && readyActive) {
         setStatus("Already hiding the word. Keep spelling!", "bad");
