@@ -396,7 +396,7 @@
         <div class="audio-row">
           <div>
             <h2>Dark Tunnel</h2>
-            <p>Now playing</p>
+            <p id="audio-status"></p>
           </div>
           <button id="audio-toggle" class="ghost">Play</button>
         </div>
@@ -449,6 +449,7 @@
     const threeBg = document.getElementById("three-bg");
     const audioToggle = document.getElementById("audio-toggle");
     const audioWave = document.getElementById("audio-wave");
+    const audioStatus = document.getElementById("audio-status");
     const bloomWordEl = document.getElementById("bloom-word");
     const celebrationEl = document.getElementById("celebration");
     const winVideoEl = document.getElementById("win-video");
@@ -495,6 +496,9 @@
     function setAudioState(isPlaying) {
       audioToggle.textContent = isPlaying ? "Pause" : "Play";
       audioWave.classList.toggle("playing", isPlaying);
+      if (audioStatus) {
+        audioStatus.textContent = isPlaying ? "Now playing" : "";
+      }
     }
 
     function startNewRound() {
