@@ -357,6 +357,49 @@
         grid-template-columns: 1fr;
       }
     }
+
+    .mobile-status {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translate(-50%, -8px) scale(0.98);
+      opacity: 0;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+      z-index: 70;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      display: none;
+    }
+
+    .mobile-status.good {
+      color: var(--good);
+      border: 1px solid rgba(47, 143, 70, 0.4);
+    }
+
+    .mobile-status.bad {
+      color: var(--bad);
+      border: 1px solid rgba(179, 38, 30, 0.45);
+    }
+
+    .mobile-status.active {
+      opacity: 1;
+      transform: translate(-50%, 0) scale(1);
+    }
+
+    @media (max-width: 860px) {
+      .mobile-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
   </style>
 </head>
 <!-- Google tag (gtag.js) -->
@@ -379,13 +422,13 @@
         Spell this flower: <strong id="target">Rose</strong>
       </div>
 
-      <div class="controls">
-        <input id="guess" type="text" autocomplete="off" spellcheck="false" placeholder="type the word" />
-        <button id="ready">Ready to Spell (60s)</button>
-        <button id="hint" class="ghost">Click me for word hint</button>
-        <button id="skip" class="ghost">Skip</button>
+      <form class="controls" id="guess-form" autocomplete="off">
+        <input id="guess" type="text" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="type the word" />
+        <button id="ready" type="button">Ready to Spell (60s)</button>
+        <button id="hint" class="ghost" type="button">Click me for word hint</button>
+        <button id="skip" class="ghost" type="button">Skip</button>
         <span class="speech-bubble">push enter to enter word</span>
-      </div>
+      </form>
 
       <div id="status" class="status"></div>
     </section>
@@ -422,6 +465,7 @@
   </div>
 
   <div class="trail-layer" id="trail-layer"></div>
+  <div id="mobile-status" class="mobile-status" aria-live="polite"></div>
   <div id="celebration" aria-hidden="true">
     <video id="win-video" playsinline>
       <source src="Stan5_s Video - Jan 26, 2026(9).mp4" type="video/mp4" />
@@ -454,6 +498,7 @@
     const listEl = document.getElementById("flower-list");
     const hintButton = document.getElementById("hint");
     const readyButton = document.getElementById("ready");
+    const guessForm = document.getElementById("guess-form");
     const trailLayer = document.getElementById("trail-layer");
     const threeBg = document.getElementById("three-bg");
     const audioToggle = document.getElementById("audio-toggle");
@@ -462,6 +507,7 @@
     const bloomWordEl = document.getElementById("bloom-word");
     const celebrationEl = document.getElementById("celebration");
     const winVideoEl = document.getElementById("win-video");
+    const mobileStatusEl = document.getElementById("mobile-status");
 
     let current = flowers[0];
     let streak = 0;
@@ -485,6 +531,9 @@
     let skyweezyCanvas = null;
     let solvedSet = new Set();
     let gameCompleted = false;
+    let mobileStatusTimeoutId = null;
+    const mobileQuery = window.matchMedia("(max-width: 860px)");
+    let isMobileLayout = mobileQuery.matches;
 
     const audio = new Audio("Dark Tunnle.mp3");
     audio.loop = true;
@@ -659,6 +708,22 @@
     function setStatus(text, type) {
       statusEl.textContent = text;
       statusEl.className = `status ${type}`;
+      showMobileStatus(text, type);
+    }
+
+    function showMobileStatus(text, type) {
+      if (!mobileStatusEl || !isMobileLayout) {
+        return;
+      }
+
+      mobileStatusEl.textContent = text;
+      mobileStatusEl.className = `mobile-status ${type} active`;
+      clearTimeout(mobileStatusTimeoutId);
+      mobileStatusTimeoutId = setTimeout(() => {
+        if (mobileStatusEl) {
+          mobileStatusEl.classList.remove("active");
+        }
+      }, 1600);
     }
 
     function createSplatterTexture() {
@@ -959,11 +1024,12 @@
       nextFlower();
     });
 
-    guessEl.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
+    if (guessForm) {
+      guessForm.addEventListener("submit", (event) => {
+        event.preventDefault();
         checkGuess();
-      }
-    });
+      });
+    }
 
     function paintTrail() {
       rafId = null;
@@ -1010,6 +1076,17 @@
       celebrationEl.addEventListener("click", () => {
         closeCelebration();
       });
+    }
+
+    if (mobileQuery) {
+      const handleMobileChange = (event) => {
+        isMobileLayout = event.matches;
+      };
+      if (mobileQuery.addEventListener) {
+        mobileQuery.addEventListener("change", handleMobileChange);
+      } else if (mobileQuery.addListener) {
+        mobileQuery.addListener(handleMobileChange);
+      }
     }
 
 
